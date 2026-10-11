@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workstub — Post it, assign it, get it done</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root{
+  --ink:#14181F;
+  --ink-soft:#4B5262;
+  --ink-faint:#8A8F9C;
+  --paper:#EEF0E9;
+  --paper-deep:#E3E6DB;
+  --card:#FFFFFF;
+  --cobalt:#2B4C7E;
+  --cobalt-dark:#1E3A63;
+  --amber:#E2A83E;
+  --amber-dark:#C58A22;
+  --coral:#C0533E;
+  --sage:#4F7D5E;
+  --line:#D3D6C9;
+  --radius:10px;
+  --shadow: 0 1px 2px rgba(20,24,31,0.06), 0 8px 24px rgba(20,24,31,0.06);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Work Sans', sans-serif;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 42px 42px;
+  background-attachment: fixed;
+  background-position: -1px -1px;
+}
+h1,h2,h3{ font-family:'Fraunces', serif; margin:0; color:var(--ink); font-weight:600; letter-spacing:-0.01em;}
+.mono{ font-family:'JetBrains Mono', monospace; }
+a{ color:inherit; text-decoration:none; }
+button{ font-family:inherit; cursor:pointer; }
+.wrap{ max-width:1180px; margin:0 auto; padding:0 28px; }
+.view{ display:none; }
+.view.active{ display:block; }
+
+/* ---------- NAV ---------- */
+.nav{
+  position:sticky; top:0; z-index:50;
+  background:rgba(238,240,233,0.92);
+  backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--line);
+}
+.nav-inner{ display:flex; align-items:center; justify-content:space-between; padding:16px 28px; max-width:1180px; margin:0 auto; }
+.logo{ display:flex; align-items:center; gap:9px; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:18px; letter-spacing:-0.02em; }
+.logo-mark{ width:22px; height:22px; flex-shrink:0; }
+.nav-links{ display:flex; align-items:center; gap:6px; }
+.nav-btn{
+  background:none; border:none; padding:9px 14px; border-radius:7px;
+  font-size:14.5px; font-weight:500; color:var(--ink-soft);
+  transition:background .15s, color .15s;
+}
+.nav-btn:hover{ background:var(--paper-deep); color:var(--ink); }
+.nav-btn.current{ color:var(--ink); background:var(--paper-deep); }
+.nav-cta{
+  background:var(--ink); color:var(--paper); border:none; padding:10px 18px;
+  border-radius:7px; font-size:14.5px; font-weight:600; margin-left:8px;
+  transition:transform .15s, background .15s;
+}
+.nav-cta:hover{ background:var(--cobalt-dark); transform:translateY(-1px); }
+.nav-toggle{ display:none; background:none; border:1px solid var(--line); border-radius:7px; padding:8px; }
+
+/* ---------- BUTTONS ---------- */
+.btn{ display:inline-flex; align-items:center; gap:8px; border:none; border-radius:8px; padding:12px 20px; font-weight:600; font-size:15px; transition:transform .15s, box-shadow .15s, background .15s;}
+.btn:active{ transform:translateY(1px); }
+.btn-amber{ background:var(--amber); color:var(--ink); }
+.btn-amber:hover{ background:var(--amber-dark); box-shadow:var(--shadow); }
+.btn-ink{ background:var(--ink); color:var(--paper); }
+.btn-ink:hover{ background:var(--cobalt-dark); }
+.btn-ghost{ background:transparent; color:var(--ink); border:1.5px solid var(--line); }
+.btn-ghost:hover{ border-color:var(--ink); }
+.btn-sm{ padding:8px 13px; font-size:13.5px; border-radius:7px; }
+.btn-block{ width:100%; justify-content:center; }
+
+/* ---------- HERO ---------- */
+.hero{ padding:64px 0 40px; }
+.hero-grid{ display:grid; grid-template-columns:1.05fr 0.95fr; gap:48px; align-items:center; }
+.eyebrow{
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600;
+  letter-spacing:0.06em; text-transform:uppercase; color:var(--cobalt-dark);
+  background:#dfe6ef; border:1px dashed var(--cobalt); border-radius:20px; padding:6px 12px 6px 10px; margin-bottom:20px;
+}
+.eyebrow .dot{ width:7px; height:7px; border-radius:50%; background:var(--sage); }
+.hero h1{ font-size:52px; line-height:1.05; margin-bottom:18px; }
+.hero p.lede{ font-size:17.5px; line-height:1.6; color:var(--ink-soft); max-width:490px; margin-bottom:30px; }
+.search-box{
+  display:flex; background:var(--card); border-radius:10px; padding:6px; box-shadow:var(--shadow); border:1px solid var(--line); gap:6px;
+}
+.search-box input[type=text]{
+  flex:1; border:none; outline:none; background:transparent; padding:12px 14px; font-size:15px; font-family:inherit; color:var(--ink);
+}
+.search-box select{
+  border:none; background:var(--paper); border-radius:7px; padding:0 10px; font-size:13.5px; font-family:'JetBrains Mono',monospace; color:var(--ink-soft);
+}
+.hero-stats{ display:flex; gap:34px; margin-top:34px; }
+.hero-stat b{ font-family:'JetBrains Mono',monospace; font-size:22px; display:block; color:var(--ink); }
+.hero-stat span{ font-size:12.5px; color:var(--ink-faint); }
+
+/* ---------- TICKET CARD (signature element) ---------- */
+.ticket{
+  position:relative;
+  background:var(--card);
+  border-radius:10px;
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+  padding:18px 18px 16px 22px;
+  overflow:visible;
+  transition:transform .18s, box-shadow .18s;
+}
+.ticket::before{
+  content:"";
+  position:absolute; left:0; top:12px; bottom:12px; width:10px;
+  background-image: radial-gradient(circle, var(--paper) 2.6px, transparent 2.7px);
+  background-size: 10px 12px;
+  background-position: -1px 0;
+  border-right:1px dashed var(--line);
+}
+a.ticket:hover, .ticket.hoverable:hover{ transform:translateY(-3px); box-shadow:0 4px 6px rgba(20,24,31,0.06), 0 14px 30px rgba(20,24,31,0.1); cursor:pointer; }
+.ticket-id{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-faint); letter-spacing:0.03em; }
+.stamp{
+  font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase;
+  border:1.5px dashed currentColor; border-radius:6px; padding:3px 8px; display:inline-block; transform:rotate(-4deg);
+}
+.stamp-digital{ color:var(--cobalt); }
+.stamp-handwritten{ color:var(--coral); }
+.stamp-both{ color:var(--amber-dark); }
+.stamp-open{ color:var(--cobalt); }
+.stamp-progress{ color:var(--amber-dark); }
+.stamp-submitted{ color:var(--coral); }
+.stamp-approved{ color:var(--sage); }
+
+.card-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; }
+.gig-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.avatar{ width:34px; height:34px; border-radius:50%; object-fit:cover; border:1.5px solid var(--line); }
+.seller-row{ display:flex; align-items:center; gap:9px; margin-bottom:10px; }
+.seller-name{ font-size:13.5px; font-weight:600; }
+.stars{ font-size:12px; color:var(--amber-dark); font-family:'JetBrains Mono',monospace; }
+.gig-title{ font-size:15px; font-weight:500; line-height:1.4; margin-bottom:14px; min-height:42px; color:var(--ink); }
+.gig-bottom{ display:flex; align-items:center; justify-content:space-between; border-top:1px dashed var(--line); padding-top:12px; }
+.gig-price{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:16px; }
+.gig-price span{ font-size:11px; color:var(--ink-faint); font-weight:400; display:block; }
+
+/* ---------- SECTIONS ---------- */
+section{ padding:56px 0; }
+.section-head{ display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:28px; }
+.section-head h2{ font-size:30px; }
+.section-head p{ color:var(--ink-soft); font-size:14.5px; margin-top:6px; }
+.kicker{ font-family:'JetBrains Mono',monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-faint); margin-bottom:8px; display:block;}
+
+.cat-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; }
+.cat-card{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:20px; transition:transform .15s, border-color .15s; }
+.cat-card:hover{ transform:translateY(-2px); border-color:var(--cobalt); cursor:pointer; }
+.cat-icon{ width:30px; height:30px; color:var(--cobalt); margin-bottom:14px; }
+.cat-card h3{ font-size:15.5px; font-family:'Work Sans',sans-serif; font-weight:600; margin-bottom:4px; }
+.cat-card span{ font-size:12.5px; color:var(--ink-faint); font-family:'JetBrains Mono',monospace; }
+
+.steps-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+.step-ticket{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:22px 20px; position:relative; }
+.step-num{ font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-faint); margin-bottom:10px; }
+.step-ticket h3{ font-size:16.5px; margin-bottom:8px; }
+.step-ticket p{ font-size:13.5px; color:var(--ink-soft); line-height:1.5; margin:0; }
+
+.org-split{ display:grid; grid-template-columns:1fr 1fr; gap:52px; align-items:center; background:var(--ink); border-radius:16px; padding:56px; color:var(--paper); }
+.org-split h2{ color:var(--paper); font-size:30px; margin-bottom:16px; }
+.org-split p{ color:#B7BEC9; font-size:15px; line-height:1.65; margin-bottom:22px; }
+.org-list{ list-style:none; padding:0; margin:0 0 26px; }
+.org-list li{ display:flex; gap:10px; align-items:flex-start; font-size:14.5px; color:#D9DEE5; margin-bottom:12px; }
+.org-list svg{ width:17px; height:17px; flex-shrink:0; margin-top:2px; color:var(--amber); }
+.org-mock{ background:#1E232C; border:1px solid #333B47; border-radius:12px; padding:18px; }
+.org-mock-row{ display:flex; justify-content:space-between; align-items:center; padding:11px 6px; border-bottom:1px solid #2A313C; font-size:13px; }
+.org-mock-row:last-child{ border-bottom:none; }
+.org-mock-row .t{ color:#DEE2E8; font-weight:500; }
+.org-mock-row .m{ color:#8890A0; font-family:'JetBrains Mono',monospace; font-size:11.5px; }
+
+footer{ border-top:1px solid var(--line); padding:44px 0 30px; margin-top:20px; }
+.foot-grid{ display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:32px; margin-bottom:32px; }
+.foot-grid h4{ font-family:'JetBrains Mono',monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-faint); margin-bottom:14px; }
+.foot-grid a{ display:block; font-size:14px; color:var(--ink-soft); margin-bottom:10px; }
+.foot-grid a:hover{ color:var(--ink); }
+.foot-bottom{ display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--line); padding-top:20px; font-size:12.5px; color:var(--ink-faint); font-family:'JetBrains Mono',monospace; }
+
+/* ---------- BROWSE ---------- */
+.browse-head{ padding:36px 0 0; }
+.browse-layout{ display:grid; grid-template-columns:230px 1fr; gap:32px; padding-bottom:60px; }
+.filter-box{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:20px; align-self:start; position:sticky; top:84px; }
+.filter-box h4{ font-family:'JetBrains Mono',monospace; font-size:11.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-faint); margin:18px 0 10px; }
+.filter-box h4:first-child{ margin-top:0; }
+.filter-row{ display:flex; align-items:center; gap:9px; font-size:14px; color:var(--ink-soft); margin-bottom:9px; cursor:pointer; }
+.filter-row input{ accent-color:var(--cobalt); }
+.browse-toolbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.browse-toolbar .count{ font-size:14px; color:var(--ink-soft); }
+.browse-toolbar select{ border:1px solid var(--line); background:var(--card); border-radius:7px; padding:9px 12px; font-size:13.5px; font-family:'JetBrains Mono',monospace; color:var(--ink); }
+.browse-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+
+/* ---------- GIG DETAIL ---------- */
+.crumb{ font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--ink-faint); padding:26px 0 0; }
+.crumb a:hover{ color:var(--ink); }
+.gig-detail-layout{ display:grid; grid-template-columns:1.5fr 1fr; gap:44px; padding:20px 0 70px; align-items:start; }
+.gig-detail h1{ font-size:30px; line-height:1.2; margin:14px 0 18px; }
+.seller-card{ display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:26px; }
+.seller-card .avatar{ width:44px; height:44px; }
+.seller-card .name{ font-weight:600; font-size:15px; }
+.seller-card .meta{ font-size:12.5px; color:var(--ink-faint); font-family:'JetBrains Mono',monospace; margin-top:2px; }
+.badge-row{ display:flex; gap:10px; margin-bottom:26px; flex-wrap:wrap; }
+.pill{ font-family:'JetBrains Mono',monospace; font-size:11.5px; padding:6px 11px; border-radius:20px; background:var(--paper-deep); color:var(--ink-soft); border:1px solid var(--line); }
+.body-copy{ font-size:15px; line-height:1.75; color:var(--ink-soft); }
+.body-copy p{ margin:0 0 16px; }
+
+.order-panel{ position:sticky; top:84px; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); }
+.mode-switch{ display:flex; background:var(--paper-deep); padding:5px; gap:4px; margin:16px; border-radius:8px; }
+.mode-btn{ flex:1; border:none; background:transparent; padding:9px 6px; font-size:13px; font-weight:600; border-radius:6px; color:var(--ink-soft); }
+.mode-btn.active{ background:var(--card); color:var(--ink); box-shadow:0 1px 3px rgba(20,24,31,0.1); }
+.pkg-tabs{ display:flex; border-bottom:1px solid var(--line); }
+.pkg-tab{ flex:1; text-align:center; padding:12px 4px; font-size:13px; font-weight:600; color:var(--ink-faint); border-bottom:2px solid transparent; background:none; border-top:none; border-left:none; border-right:none;}
+.pkg-tab.active{ color:var(--ink); border-bottom-color:var(--amber); }
+.pkg-body{ padding:20px; }
+.pkg-price{ font-family:'JetBrains Mono',monospace; font-size:28px; font-weight:700; margin-bottom:4px; }
+.pkg-days{ font-size:13px; color:var(--ink-soft); margin-bottom:16px; }
+.pkg-feat{ list-style:none; padding:0; margin:0 0 20px; }
+.pkg-feat li{ display:flex; gap:8px; font-size:13.5px; color:var(--ink-soft); margin-bottom:10px; align-items:flex-start; }
+.pkg-feat svg{ width:15px; height:15px; color:var(--sage); flex-shrink:0; margin-top:2px; }
+.field{ margin-bottom:14px; }
+.field label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink-soft); margin-bottom:6px; }
+.field input[type=text], .field input[type=date], .field textarea, .field select{
+  width:100%; border:1px solid var(--line); border-radius:7px; padding:10px 11px; font-size:13.5px; font-family:inherit; background:var(--paper); color:var(--ink); resize:vertical;
+}
+.check-row{ display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--ink-soft); margin-bottom:9px; }
+.check-row input{ accent-color:var(--cobalt); }
+
+/* ---------- POST/ASSIGN FORM ---------- */
+.post-wrap{ max-width:680px; margin:0 auto; padding:44px 0 80px; }
+.post-card{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:36px; box-shadow:var(--shadow); }
+.role-toggle{ display:flex; gap:10px; margin-bottom:26px; }
+.role-opt{ flex:1; border:1.5px solid var(--line); border-radius:10px; padding:16px; background:var(--paper); }
+.role-opt.active{ border-color:var(--cobalt); background:#E7ECF3; }
+.role-opt b{ display:block; font-size:14.5px; margin-bottom:4px; }
+.role-opt span{ font-size:12.5px; color:var(--ink-faint); }
+.grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+/* ---------- DASHBOARD ---------- */
+.dash-head{ padding:40px 0 0; }
+.dash-tabs{ display:flex; gap:6px; border-bottom:1px solid var(--line); margin:24px 0 26px; }
+.dash-tab{ background:none; border:none; padding:12px 16px; font-size:14.5px; font-weight:600; color:var(--ink-faint); border-bottom:2px solid transparent; margin-bottom:-1px; }
+.dash-tab.active{ color:var(--ink); border-bottom-color:var(--amber); }
+.dash-row{ background:var(--card); border:1px solid var(--line); border-radius:10px; margin-bottom:14px; overflow:hidden; }
+.dash-row-main{ display:grid; grid-template-columns:110px 1.6fr 1fr 120px 130px 100px; align-items:center; gap:14px; padding:16px 18px; }
+.dash-title{ font-weight:600; font-size:14.5px; }
+.dash-meta{ font-size:12.5px; color:var(--ink-faint); font-family:'JetBrains Mono',monospace; }
+.dash-expand{ display:none; border-top:1px dashed var(--line); padding:18px; background:var(--paper); }
+.dash-row.open .dash-expand{ display:block; }
+.submit-opts{ display:flex; gap:12px; flex-wrap:wrap; }
+.submit-opt{ display:flex; align-items:center; gap:8px; background:var(--card); border:1.5px solid var(--line); padding:11px 16px; border-radius:8px; font-size:13.5px; font-weight:600; color:var(--ink); }
+.submit-opt:hover{ border-color:var(--cobalt); }
+.submit-opt svg{ width:17px; height:17px; color:var(--cobalt); }
+.submit-note{ font-size:12.5px; color:var(--sage); font-weight:600; margin-top:10px; display:none; }
+.dash-row.submitted .submit-note{ display:block; }
+.dash-row.submitted .submit-opts{ display:none; }
+.empty-state{ text-align:center; padding:60px 20px; color:var(--ink-faint); }
+
+/* ---------- MODAL ---------- */
+.overlay{ position:fixed; inset:0; background:rgba(20,24,31,0.55); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; }
+.overlay.active{ display:flex; }
+.modal{ background:var(--card); border-radius:14px; max-width:420px; width:100%; padding:36px 30px; text-align:center; position:relative; }
+.modal .big-stamp{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:14px; letter-spacing:0.08em; border:2.5px dashed var(--sage); color:var(--sage); border-radius:10px; padding:10px 18px; display:inline-block; transform:rotate(-5deg); margin-bottom:18px; text-transform:uppercase; }
+.modal h3{ font-size:22px; margin-bottom:8px; }
+.modal p{ color:var(--ink-soft); font-size:14px; margin-bottom:22px; }
+.modal .modal-ticket{ font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--ink-faint); margin-bottom:22px; }
+.close-x{ position:absolute; top:14px; right:14px; background:none; border:none; color:var(--ink-faint); }
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width:900px){
+  .hero-grid{ grid-template-columns:1fr; }
+  .card-grid, .browse-grid{ grid-template-columns:repeat(2,1fr); }
+  .cat-grid{ grid-template-columns:repeat(2,1fr); }
+  .steps-row{ grid-template-columns:repeat(2,1fr); }
+  .org-split{ grid-template-columns:1fr; padding:36px; }
+  .browse-layout{ grid-template-columns:1fr; }
+  .filter-box{ position:static; }
+  .gig-detail-layout{ grid-template-columns:1fr; }
+  .foot-grid{ grid-template-columns:1fr 1fr; }
+  .nav-links{ display:none; }
+  .nav-toggle{ display:block; }
+  .dash-row-main{ grid-template-columns:1fr; gap:6px; }
+}
+@media (max-width:560px){
+  .card-grid, .browse-grid, .cat-grid, .steps-row{ grid-template-columns:1fr; }
+  .hero h1{ font-size:36px; }
+  .search-box{ flex-direction:column; }
+  .search-box select{ padding:10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ================= NAV ================= -->
+<div class="nav">
+  <div class="nav-inner">
+    <a class="logo" href="#" onclick="showView('home');return false;">
+      <svg class="logo-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h4" stroke-dasharray="1.5 2"/><circle cx="7.2" cy="9" r="0" /></svg>
+      workstub
+    </a>
+    <div class="nav-links" id="navLinks">
+      <button class="nav-btn" data-view="browse" onclick="showView('browse')">Browse Work</button>
+      <button class="nav-btn" data-view="post" onclick="showView('post')">Post / Assign Work</button>
+      <button class="nav-btn" data-view="dashboard" onclick="showView('dashboard')">Dashboard</button>
+      <button class="nav-btn">Sign In</button>
+      <button class="nav-cta" onclick="showView('post')">Get Started</button>
+    </div>
+    <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('mobileOpen')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ================= HOME ================= -->
+<div class="view active" id="view-home">
+  <div class="wrap">
+    <div class="hero">
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow"><span class="dot"></span>WORK ORDER QUEUE — OPEN NOW</div>
+          <h1>Every task starts as a stub.</h1>
+          <p class="lede">Post freelance gigs or assign work inside your organisation. Designers, writers, coders and offline hands, all in one queue. Submissions come back digital or handwritten, and get stamped when they're done.</p>
+          <div class="search-box">
+            <input type="text" placeholder="What do you need done? Try 'logo design' or 'data entry'">
+            <select>
+              <option>Either delivery</option>
+              <option>Digital only</option>
+              <option>Handwritten only</option>
+            </select>
+            <button class="btn btn-amber" onclick="showView('browse')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              Search
+            </button>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat"><b>12,480</b><span>work orders closed</span></div>
+            <div class="hero-stat"><b>3,200+</b><span>verified hands</span></div>
+            <div class="hero-stat"><b>98%</b><span>on-time stamp rate</span></div>
+          </div>
+        </div>
+        <div id="heroTickets"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <section>
+      <span class="kicker">Categories</span>
+      <div class="section-head"><h2>Find work by trade</h2></div>
+      <div class="cat-grid" id="catGrid"></div>
+    </section>
+
+    <section>
+      <span class="kicker">The process</span>
+      <div class="section-head"><h2>How a work order moves</h2></div>
+      <div class="steps-row">
+        <div class="step-ticket"><div class="step-num">01 / STUB CUT</div><h3>Post the work order</h3><p>Describe the task, set a budget or assign it directly to someone in your organisation.</p></div>
+        <div class="step-ticket"><div class="step-num">02 / CLAIMED</div><h3>A hand takes it on</h3><p>A freelancer or team member picks it up and the ticket moves to in progress.</p></div>
+        <div class="step-ticket"><div class="step-num">03 / WORKED</div><h3>Work gets done</h3><p>Typed, designed, coded — or written out by hand and scanned in when it's ready.</p></div>
+        <div class="step-ticket"><div class="step-num">04 / STAMPED</div><h3>Reviewed & approved</h3><p>You check it over and stamp it approved. The ticket closes and the record stays on file.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div><span class="kicker">Open now</span><h2>Featured work orders</h2></div>
+        <button class="btn btn-ghost btn-sm" onclick="showView('browse')">Browse all →</button>
+      </div>
+      <div class="card-grid" id="featuredGrid"></div>
+    </section>
+
+    <section>
+      <div class="org-split">
+        <div>
+          <span class="kicker" style="color:#8890A0;">For organisations</span>
+          <h2>Assign work inside your team, not just outside it.</h2>
+          <p>Give tasks to your staff, students or contractors with a due date, then track exactly how the work comes back — a file, a link, or a scanned page.</p>
+          <ul class="org-list">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>Assign directly to a named person or leave it open to your team</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>Accept digital files or handwritten pages scanned on submission</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>Every ticket keeps a stamped record once it's approved</li>
+          </ul>
+          <button class="btn btn-amber" onclick="showView('post')">Assign your first task</button>
+        </div>
+        <div class="org-mock">
+          <div class="org-mock-row"><span class="t">Scan signed intern agreements</span><span class="m stamp stamp-handwritten">handwritten</span></div>
+          <div class="org-mock-row"><span class="t">Q3 competitor research brief</span><span class="m stamp stamp-approved">approved</span></div>
+          <div class="org-mock-row"><span class="t">Translate onboarding FAQ</span><span class="m stamp stamp-progress">in progress</span></div>
+          <div class="org-mock-row"><span class="t">Fill vendor compliance form</span><span class="m stamp stamp-handwritten">handwritten</span></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ================= BROWSE ================= -->
+<div class="view" id="view-browse">
+  <div class="wrap browse-head">
+    <span class="kicker">Open work orders</span>
+    <h2 style="font-size:30px;">Browse work</h2>
+  </div>
+  <div class="wrap browse-layout">
+    <div class="filter-box">
+      <h4>Category</h4>
+      <div id="filterCats"></div>
+      <h4>Delivery type</h4>
+      <label class="filter-row"><input type="radio" name="delivery" value="all" checked onchange="applyFilters()">Either</label>
+      <label class="filter-row"><input type="radio" name="delivery" value="digital" onchange="applyFilters()">Digital only</label>
+      <label class="filter-row"><input type="radio" name="delivery" value="handwritten" onchange="applyFilters()">Handwritten only</label>
+      <h4>Budget</h4>
+      <label class="filter-row"><input type="checkbox" onchange="applyFilters()" class="budgetChk" value="0-40">Under $40</label>
+      <label class="filter-row"><input type="checkbox" onchange="applyFilters()" class="budgetChk" value="40-80">$40 – $80</label>
+      <label class="filter-row"><input type="checkbox" onchange="applyFilters()" class="budgetChk" value="80-999">$80+</label>
+    </div>
+    <div>
+      <div class="browse-toolbar">
+        <span class="count" id="resultCount">8 open work orders</span>
+        <select id="sortSelect" onchange="applyFilters()">
+          <option value="match">Best match</option>
+          <option value="low">Price: low to high</option>
+          <option value="high">Price: high to low</option>
+        </select>
+      </div>
+      <div class="browse-grid" id="browseGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= GIG DETAIL ================= -->
+<div class="view" id="view-gig">
+  <div class="wrap">
+    <div class="crumb"><a href="#" onclick="showView('browse');return false;">Browse work</a> / <span id="gigCrumbCat"></span></div>
+    <div class="gig-detail-layout">
+      <div class="gig-detail">
+        <div class="badge-row" id="gigBadgeTop"></div>
+        <h1 id="gigTitle"></h1>
+        <div class="seller-card">
+          <img class="avatar" id="gigAvatar" src="" alt="">
+          <div>
+            <div class="name" id="gigSellerName"></div>
+            <div class="meta" id="gigSellerMeta"></div>
+          </div>
+        </div>
+        <div class="badge-row" id="gigBadges"></div>
+        <div class="body-copy" id="gigDesc"></div>
+      </div>
+
+      <div class="order-panel">
+        <div class="mode-switch">
+          <button class="mode-btn active" id="modeIndBtn" onclick="setOrderMode('individual')">Hire freelancer</button>
+          <button class="mode-btn" id="modeOrgBtn" onclick="setOrderMode('org')">Assign as org task</button>
+        </div>
+
+        <div id="orderIndividual">
+          <div class="pkg-tabs">
+            <button class="pkg-tab active" data-p="0" onclick="setPkg(0)">Basic</button>
+            <button class="pkg-tab" data-p="1" onclick="setPkg(1)">Standard</button>
+            <button class="pkg-tab" data-p="2" onclick="setPkg(2)">Premium</button>
+          </div>
+          <div class="pkg-body">
+            <div class="pkg-price mono" id="pkgPrice"></div>
+            <div class="pkg-days" id="pkgDays"></div>
+            <ul class="pkg-feat" id="pkgFeat"></ul>
+            <div class="field">
+              <label>Expected submission</label>
+              <label class="check-row"><input type="checkbox" checked>Digital file</label>
+              <label class="check-row" id="handwrittenChk"><input type="checkbox">Handwritten, scanned on delivery</label>
+            </div>
+            <button class="btn btn-amber btn-block" onclick="openOrderConfirm('individual')">Continue</button>
+          </div>
+        </div>
+
+        <div id="orderOrg" style="display:none;">
+          <div class="pkg-body" style="padding-top:4px;">
+            <div class="field"><label>Assign to</label><input type="text" placeholder="Name or team, leave blank to open to anyone"></div>
+            <div class="field"><label>Due date</label><input type="date"></div>
+            <div class="field"><label>Instructions</label><textarea rows="3" placeholder="Any notes for whoever picks this up"></textarea></div>
+            <div class="field">
+              <label>Expected submission</label>
+              <label class="check-row"><input type="checkbox" checked>Digital file</label>
+              <label class="check-row"><input type="checkbox">Handwritten, scanned on delivery</label>
+            </div>
+            <button class="btn btn-ink btn-block" onclick="openOrderConfirm('org')">Assign task</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= POST / ASSIGN ================= -->
+<div class="view" id="view-post">
+  <div class="wrap post-wrap">
+    <span class="kicker">New work order</span>
+    <h2 style="font-size:28px;margin-bottom:26px;">Post a gig or assign a task</h2>
+    <div class="post-card">
+      <div class="role-toggle">
+        <div class="role-opt active" id="roleGigOpt" onclick="setPostRole('gig')">
+          <b>Freelance gig</b><span>Open it up to the marketplace, anyone can claim it</span>
+        </div>
+        <div class="role-opt" id="roleOrgOpt" onclick="setPostRole('org')">
+          <b>Organisation task</b><span>Assign it to someone specific, on the record</span>
+        </div>
+      </div>
+
+      <div class="field"><label>Title</label><input type="text" id="postTitle" placeholder="e.g. Redesign the onboarding flow mockups"></div>
+      <div class="grid2">
+        <div class="field"><label>Category</label>
+          <select id="postCategory">
+            <option>Design & Creative</option><option>Writing & Content</option><option>Code & Data</option>
+            <option>Handwritten & Physical</option><option>Admin & Data Entry</option><option>Academic Assignments</option>
+            <option>Research</option><option>Translation</option>
+          </select>
+        </div>
+        <div class="field"><label>Due date</label><input type="date" id="postDue"></div>
+      </div>
+      <div class="field"><label>Description</label><textarea id="postDesc" rows="4" placeholder="What needs to get done, and anything the person doing it should know"></textarea></div>
+
+      <div class="grid2">
+        <div class="field" id="postBudgetField"><label>Budget (USD)</label><input type="text" id="postBudget" placeholder="e.g. 60"></div>
+        <div class="field" id="postAssigneeField" style="display:none;"><label>Assign to</label><input type="text" id="postAssignee" placeholder="Name or leave open to your team"></div>
+      </div>
+
+      <div class="field">
+        <label>Accepted submission format</label>
+        <label class="check-row"><input type="checkbox" id="postDigital" checked>Digital file</label>
+        <label class="check-row"><input type="checkbox" id="postHandwritten">Handwritten, scanned on delivery</label>
+      </div>
+
+      <button class="btn btn-amber btn-block" onclick="submitPost()" id="postSubmitBtn">Create work order</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= DASHBOARD ================= -->
+<div class="view" id="view-dashboard">
+  <div class="wrap dash-head">
+    <span class="kicker">Your queue</span>
+    <h2 style="font-size:30px;">Dashboard</h2>
+    <div class="dash-tabs">
+      <button class="dash-tab active" data-t="posted" onclick="setDashTab('posted')">Work I've Posted</button>
+      <button class="dash-tab" data-t="assigned" onclick="setDashTab('assigned')">Work I'm Doing</button>
+    </div>
+    <div id="dashList"></div>
+  </div>
+</div>
+
+<!-- ================= CONFIRM MODAL ================= -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal">
+    <button class="close-x" onclick="closeOverlay()">✕</button>
+    <div class="big-stamp" id="modalStampText">Work order created</div>
+    <h3>Ticket cut</h3>
+    <p id="modalDesc">Your work order has been added to the queue.</p>
+    <div class="modal-ticket mono" id="modalTicketNo"></div>
+    <button class="btn btn-ink btn-block" onclick="closeOverlay(); showView('dashboard');">Go to dashboard</button>
+  </div>
+</div>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a class="logo" href="#" style="margin-bottom:10px;display:inline-flex;" onclick="showView('home');return false;">
+          <svg class="logo-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/></svg>workstub
+        </a>
+        <p style="font-size:13.5px;color:var(--ink-soft);max-width:230px;line-height:1.6;">A queue for work that needs doing — freelance or in-house, typed or handwritten.</p>
+      </div>
+      <div><h4>Marketplace</h4><a href="#" onclick="showView('browse');return false;">Browse work</a><a href="#" onclick="showView('post');return false;">Post a gig</a><a href="#">Categories</a></div>
+      <div><h4>Organisations</h4><a href="#" onclick="showView('post');return false;">Assign a task</a><a href="#" onclick="showView('dashboard');return false;">Team dashboard</a><a href="#">Submission tracking</a></div>
+      <div><h4>Company</h4><a href="#">About</a><a href="#">Trust & safety</a><a href="#">Support</a></div>
+    </div>
+    <div class="foot-bottom"><span>© 2026 WORKSTUB — WO-FOOT-0001</span><span>Made for work that gets stamped, not lost</span></div>
+  </div>
+</footer>
+
+<script>
+/* ============ ICONS ============ */
+const icons = {
+  design: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>',
+  writing: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
+  code: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 18l6-6-6-6"/><path d="M8 6l-6 6 6 6"/></svg>',
+  hand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8L2 8"/><path d="M20 12H2"/><path d="M18 16H2"/><path d="M8 3l2 5-2 0"/></svg>',
+  admin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 4v5"/></svg>',
+  academic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg>',
+  research: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
+  translate: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2v3"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>',
+  upload: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>',
+  camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>'
+};
+
+/* ============ DATA ============ */
+const categories = [
+  {name:'Design & Creative', icon:'design', count:1204},
+  {name:'Writing & Content', icon:'writing', count:986},
+  {name:'Code & Data', icon:'code', count:1310},
+  {name:'Handwritten & Physical', icon:'hand', count:342},
+  {name:'Admin & Data Entry', icon:'admin', count:511},
+  {name:'Academic Assignments', icon:'academic', count:874},
+  {name:'Research', icon:'research', count:398},
+  {name:'Translation', icon:'translate', count:267},
+];
+
+const gigsData = [
+  {id:1, ticket:'WO-2026-0201', title:'I will design a clean SaaS landing page', seller:{name:'Ananya Rao', avatar:2, rating:4.9, reviews:212}, price:65, days:3, deliveryType:'digital', category:'Design & Creative'},
+  {id:2, ticket:'WO-2026-0202', title:'I will write SEO blog articles that actually rank', seller:{name:'Devon Cole', avatar:12, rating:4.8, reviews:341}, price:40, days:2, deliveryType:'digital', category:'Writing & Content'},
+  {id:3, ticket:'WO-2026-0203', title:'I will build a small Node.js API for you', seller:{name:'Ibrahim Al-Sayed', avatar:23, rating:5.0, reviews:98}, price:120, days:5, deliveryType:'digital', category:'Code & Data'},
+  {id:4, ticket:'WO-2026-0204', title:'I will hand-letter your wedding invitations', seller:{name:'Priya Nair', avatar:32, rating:4.9, reviews:154}, price:80, days:6, deliveryType:'handwritten', category:'Handwritten & Physical'},
+  {id:5, ticket:'WO-2026-0205', title:'I will digitise and file your paper records', seller:{name:'Marcus Webb', avatar:14, rating:4.7, reviews:76}, price:35, days:2, deliveryType:'both', category:'Admin & Data Entry'},
+  {id:6, ticket:'WO-2026-0206', title:'I will solve and explain calculus assignments', seller:{name:'Lena Fischer', avatar:45, rating:4.9, reviews:266}, price:25, days:1, deliveryType:'both', category:'Academic Assignments'},
+  {id:7, ticket:'WO-2026-0207', title:'I will research and summarise market data', seller:{name:'Tomás Ibarra', avatar:51, rating:4.8, reviews:132}, price:55, days:3, deliveryType:'digital', category:'Research'},
+  {id:8, ticket:'WO-2026-0208', title:'I will translate documents, Hindi to English', seller:{name:'Kavya Iyer', avatar:9, rating:5.0, reviews:189}, price:30, days:1, deliveryType:'digital', category:'Translation'},
+];
+
+let myPosted = [
+  {ticket:'WO-2026-0142', title:'Redesign onboarding flow mockups', counterpart:'Priya N.', due:'Aug 29, 2026', status:'SUBMITTED', deliveryType:'digital'},
+  {ticket:'WO-2026-0139', title:'Scan & submit signed intern agreements', counterpart:'Rahul K.', due:'Aug 25, 2026', status:'IN PROGRESS', deliveryType:'handwritten'},
+  {ticket:'WO-2026-0131', title:'Q3 competitor research brief', counterpart:'Meera S.', due:'Aug 20, 2026', status:'APPROVED', deliveryType:'digital'},
+];
+let myAssignments = [
+  {ticket:'WO-2026-0155', title:'Translate product FAQ to Hindi', counterpart:'Workstub Client', due:'Aug 27, 2026', status:'IN PROGRESS', deliveryType:'digital'},
+  {ticket:'WO-2026-0150', title:'Fill & sign vendor compliance form', counterpart:'Northbridge Org', due:'Aug 24, 2026', status:'IN PROGRESS', deliveryType:'handwritten'},
+  {ticket:'WO-2026-0144', title:'Logo concepts for bakery rebrand', counterpart:'Ana R.', due:'Aug 22, 2026', status:'SUBMITTED', deliveryType:'digital'},
+];
+let ticketCounter = 209;
+
+/* ============ HELPERS ============ */
+function stars(r){ return '★'.repeat(Math.round(r)) + ' ' + r.toFixed(1); }
+function deliveryLabel(t){ return t==='digital' ? 'Digital' : t==='handwritten' ? 'Handwritten' : 'Digital or handwritten'; }
+function stampClass(t){ return t==='digital' ? 'stamp-digital' : t==='handwritten' ? 'stamp-handwritten' : 'stamp-both'; }
+
+function gigCardHTML(g){
+  return `<a class="ticket hoverable" href="#" onclick="openGig(${g.id});return false;">
+      <div class="gig-top"><span class="ticket-id mono">${g.ticket}</span><span class="stamp ${stampClass(g.deliveryType)}">${deliveryLabel(g.deliveryType)}</span></div>
+      <div class="seller-row">
+        <img class="avatar" src="https://i.pravatar.cc/80?img=${g.seller.avatar}" alt="">
+        <div><div class="seller-name">${g.seller.name}</div><div class="stars">${stars(g.seller.rating)} (${g.seller.reviews})</div></div>
+      </div>
+      <div class="gig-title">${g.title}</div>
+      <div class="gig-bottom"><span class="pill">${g.category}</span><div class="gig-price">$${g.price}<span>${g.days}d delivery</span></div></div>
+    </a>`;
+}
+
+/* ============ RENDER: HOME ============ */
+function renderHero(){
+  const picks = [gigsData[3], gigsData[0], gigsData[5]];
+  document.getElementById('heroTickets').innerHTML = picks.map((g,i)=>`
+    <div class="ticket hoverable" style="margin-bottom:14px;transform:rotate(${i===1?0:(i===0?-1.5:1.5)}deg);" onclick="openGig(${g.id})">
+      <div class="gig-top"><span class="ticket-id mono">${g.ticket}</span><span class="stamp ${stampClass(g.deliveryType)}">${deliveryLabel(g.deliveryType)}</span></div>
+      <div class="seller-row"><img class="avatar" src="https://i.pravatar.cc/80?img=${g.seller.avatar}"><div><div class="seller-name">${g.seller.name}</div><div class="stars">${stars(g.seller.rating)}</div></div></div>
+      <div class="gig-title" style="min-height:auto;">${g.title}</div>
+      <div class="gig-bottom"><span class="pill">${g.category}</span><div class="gig-price">$${g.price}</div></div>
+    </div>`).join('');
+}
+function renderCategories(){
+  document.getElementById('catGrid').innerHTML = categories.map(c=>`
+    <div class="cat-card" onclick="filterByCategory('${c.name.replace(/'/g,"\\'")}')">
+      <div class="cat-icon">${icons[c.icon]}</div>
+      <h3>${c.name}</h3><span>${c.count.toLocaleString()} open</span>
+    </div>`).join('');
+}
+function renderFeatured(){
+  document.getElementById('featuredGrid').innerHTML = gigsData.slice(0,6).map(gigCardHTML).join('');
+}
+
+/* ============ VIEW ROUTING ============ */
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('current', b.dataset.view===name));
+  document.getElementById('navLinks').classList.remove('mobileOpen');
+  window.scrollTo({top:0, behavior:'instant'});
+  if(name==='browse') applyFilters();
+  if(name==='dashboard') renderDashboard();
+}
+
+/* ============ BROWSE ============ */
+let activeCategoryFilter = null;
+function renderFilterCats(){
+  document.getElementById('filterCats').innerHTML = categories.map(c=>`
+    <label class="filter-row"><input type="checkbox" class="catChk" value="${c.name}" onchange="applyFilters()">${c.name}</label>`).join('');
+}
+function filterByCategory(name){
+  showView('browse');
+  document.querySelectorAll('.catChk').forEach(chk=>{ chk.checked = (chk.value===name); });
+  applyFilters();
+}
+function applyFilters(){
+  const catChks = [...document.querySelectorAll('.catChk:checked')].map(c=>c.value);
+  const delivery = document.querySelector('input[name=delivery]:checked').value;
+  const budgets = [...document.querySelectorAll('.budgetChk:checked')].map(c=>c.value);
+  const sort = document.getElementById('sortSelect').value;
+
+  let list = gigsData.filter(g=>{
+    if(catChks.length && !catChks.includes(g.category)) return false;
+    if(delivery!=='all' && g.deliveryType!=='both' && g.deliveryType!==delivery) return false;
+    if(delivery!=='all' && g.deliveryType==='both'){/* both always passes */}
+    if(budgets.length){
+      const inRange = budgets.some(b=>{ const [lo,hi]=b.split('-').map(Number); return g.price>=lo && g.price<=hi; });
+      if(!inRange) return false;
+    }
+    return true;
+  });
+  if(sort==='low') list = list.slice().sort((a,b)=>a.price-b.price);
+  if(sort==='high') list = list.slice().sort((a,b)=>b.price-a.price);
+
+  document.getElementById('browseGrid').innerHTML = list.length ? list.map(gigCardHTML).join('') : '<div class="empty-state">No open work orders match those filters yet.</div>';
+  document.getElementById('resultCount').textContent = list.length + ' open work order' + (list.length===1?'':'s');
+}
+
+/* ============ GIG DETAIL ============ */
+let currentGig = null;
+let currentPkg = 0;
+function openGig(id){
+  currentGig = gigsData.find(g=>g.id===id);
+  currentPkg = 0;
+  const g = currentGig;
+  document.getElementById('gigCrumbCat').textContent = g.category;
+  document.getElementById('gigTitle').textContent = g.title;
+  document.getElementById('gigAvatar').src = `https://i.pravatar.cc/100?img=${g.seller.avatar}`;
+  document.getElementById('gigSellerName').textContent = g.seller.name;
+  document.getElementById('gigSellerMeta').textContent = `${stars(g.seller.rating)} · ${g.seller.reviews} reviews · usually responds within 2h`;
+  document.getElementById('gigBadgeTop').innerHTML = `<span class="ticket-id mono">${g.ticket}</span>`;
+  document.getElementById('gigBadges').innerHTML = `<span class="pill">${g.category}</span><span class="stamp ${stampClass(g.deliveryType)}">${deliveryLabel(g.deliveryType)} submission</span>`;
+  document.getElementById('gigDesc').innerHTML = `<p>${g.seller.name} takes on ${g.category.toLowerCase()} work through Workstub, delivered ${g.deliveryType==='handwritten' ? 'as scanned handwritten pages' : g.deliveryType==='both' ? 'as a digital file or a scanned handwritten copy, whichever you need' : 'as a digital file'}.</p><p>Every order gets its own ticket number, so you can track exactly where it sits in the queue, from claimed to submitted to stamped approved.</p>`;
+  document.getElementById('handwrittenChk').style.display = (g.deliveryType==='digital') ? 'none' : 'flex';
+  setOrderMode('individual');
+  setPkg(0);
+  showView('gig');
+}
+function setOrderMode(mode){
+  document.getElementById('modeIndBtn').classList.toggle('active', mode==='individual');
+  document.getElementById('modeOrgBtn').classList.toggle('active', mode==='org');
+  document.getElementById('orderIndividual').style.display = mode==='individual' ? 'block' : 'none';
+  document.getElementById('orderOrg').style.display = mode==='org' ? 'block' : 'none';
+}
+function setPkg(i){
+  currentPkg = i;
+  document.querySelectorAll('.pkg-tab').forEach((t,idx)=>t.classList.toggle('active', idx===i));
+  const g = currentGig;
+  const mult = [1, 1.6, 2.4][i];
+  const days = [g.days, Math.max(1,g.days-1), Math.max(1,g.days-2)][i];
+  const label = ['Basic','Standard','Premium'][i];
+  document.getElementById('pkgPrice').textContent = '$' + Math.round(g.price*mult);
+  document.getElementById('pkgDays').textContent = `${label} package · ${days} day delivery`;
+  const feats = [
+    ['1 revision','Source file included'],
+    ['3 revisions','Source file included','Priority queue'],
+    ['Unlimited revisions','Source file included','Priority queue','1:1 review call']
+  ][i];
+  document.getElementById('pkgFeat').innerHTML = feats.map(f=>`<li>${icons.check}${f}</li>`).join('');
+}
+
+/* ============ CONFIRM MODAL / CREATE TICKET ============ */
+function openOrderConfirm(mode){
+  ticketCounter++;
+  const ticket = 'WO-2026-0' + ticketCounter;
+  const g = currentGig;
+  myPosted.unshift({ticket, title:g.title, counterpart: mode==='org' ? 'Assigned — open' : g.seller.name, due:'—', status:'OPEN', deliveryType:g.deliveryType});
+  document.getElementById('modalStampText').textContent = mode==='org' ? 'Task assigned' : 'Work order created';
+  document.getElementById('modalDesc').textContent = mode==='org' ? 'The task has been assigned and added to your queue.' : 'Your order has been placed and added to your queue.';
+  document.getElementById('modalTicketNo').textContent = 'TICKET ' + ticket;
+  document.getElementById('confirmOverlay').classList.add('active');
+}
+function closeOverlay(){ document.getElementById('confirmOverlay').classList.remove('active'); }
+
+/* ============ POST / ASSIGN FORM ============ */
+let postRole = 'gig';
+function setPostRole(role){
+  postRole = role;
+  document.getElementById('roleGigOpt').classList.toggle('active', role==='gig');
+  document.getElementById('roleOrgOpt').classList.toggle('active', role==='org');
+  document.getElementById('postBudgetField').style.display = role==='gig' ? 'block' : 'none';
+  document.getElementById('postAssigneeField').style.display = role==='org' ? 'block' : 'none';
+  document.getElementById('postSubmitBtn').textContent = role==='gig' ? 'Create work order' : 'Assign task';
+}
+function submitPost(){
+  const title = document.getElementById('postTitle').value.trim() || 'Untitled work order';
+  const due = document.getElementById('postDue').value || '—';
+  const digital = document.getElementById('postDigital').checked;
+  const handwritten = document.getElementById('postHandwritten').checked;
+  const dtype = digital && handwritten ? 'both' : handwritten ? 'handwritten' : 'digital';
+  ticketCounter++;
+  const ticket = 'WO-2026-0' + ticketCounter;
+  const counterpart = postRole==='org' ? (document.getElementById('postAssignee').value.trim() || 'Open to team') : 'Open to freelancers';
+  myPosted.unshift({ticket, title, counterpart, due, status:'OPEN', deliveryType:dtype});
+  document.getElementById('modalStampText').textContent = postRole==='org' ? 'Task assigned' : 'Work order created';
+  document.getElementById('modalDesc').textContent = postRole==='org' ? 'The task has been assigned and added to your queue.' : 'Your gig is now open in the marketplace queue.';
+  document.getElementById('modalTicketNo').textContent = 'TICKET ' + ticket;
+  document.getElementById('confirmOverlay').classList.add('active');
+  document.getElementById('postTitle').value=''; document.getElementById('postDesc').value=''; document.getElementById('postDue').value='';
+}
+
+/* ============ DASHBOARD ============ */
+let dashTab = 'posted';
+function setDashTab(t){
+  dashTab = t;
+  document.querySelectorAll('.dash-tab').forEach(b=>b.classList.toggle('active', b.dataset.t===t));
+  renderDashboard();
+}
+function statusStampClass(s){
+  return s==='OPEN' ? 'stamp-open' : s==='IN PROGRESS' ? 'stamp-progress' : s==='SUBMITTED' ? 'stamp-submitted' : 'stamp-approved';
+}
+function renderDashboard(){
+  const data = dashTab==='posted' ? myPosted : myAssignments;
+  const list = document.getElementById('dashList');
+  if(!data.length){ list.innerHTML = '<div class="empty-state">Nothing here yet — the queue is empty.</div>'; return; }
+  list.innerHTML = data.map((row,idx)=>{
+    const canSubmit = dashTab==='assigned' && row.status==='IN PROGRESS';
+    const canApprove = dashTab==='posted' && row.status==='SUBMITTED';
+    return `<div class="dash-row ${row.status==='SUBMITTED' && dashTab==='assigned' ? 'submitted':''}" id="row-${dashTab}-${idx}">
+      <div class="dash-row-main">
+        <span class="ticket-id mono">${row.ticket}</span>
+        <span class="dash-title">${row.title}</span>
+        <span class="dash-meta">${row.counterpart}</span>
+        <span class="dash-meta">Due ${row.due}</span>
+        <span class="stamp ${statusStampClass(row.status)}">${row.status}</span>
+        <span class="stamp ${stampClass(row.deliveryType)}" style="justify-self:end;">${deliveryLabel(row.deliveryType)}</span>
+      </div>
+      ${(canSubmit||canApprove) ? `<div class="dash-expand" style="display:block;">
+        ${canSubmit ? `<div class="submit-opts">
+            <button class="submit-opt" onclick="markSubmitted('${dashTab}',${idx})">${icons.upload}Upload digital file</button>
+            <button class="submit-opt" onclick="markSubmitted('${dashTab}',${idx})">${icons.camera}Submit handwritten scan</button>
+          </div>
+          <div class="submit-note">Submitted just now — waiting on review</div>`
+        : `<button class="btn btn-ink btn-sm" onclick="markApproved(${idx})">Approve & stamp</button>`}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+function markSubmitted(tab, idx){
+  myAssignments[idx].status = 'SUBMITTED';
+  renderDashboard();
+}
+function markApproved(idx){
+  myPosted[idx].status = 'APPROVED';
+  renderDashboard();
+}
+
+/* ============ INIT ============ */
+renderHero();
+renderCategories();
+renderFeatured();
+renderFilterCats();
+showView('home');
+</script>
+</body>
+</html>
